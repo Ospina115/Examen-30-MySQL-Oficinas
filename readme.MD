@@ -1,5 +1,7 @@
 # **SOLUCION CASOS DE USO:**
 
+integrantes: Joseph Samuel Ospina Velasco
+
 #### **CONSULTAS SOBRE UNA TABLA**
 
 1. Devuelve un listado con el código de oficina y la ciudad donde hay oficinas.
@@ -220,3 +222,263 @@
     ```
 
     
+
+### Consultas multitabla (Composición interna)
+
+1. Obtén un listado con el nombre de cada cliente y el nombre y apellido de su
+   representante de ventas.
+
+   ```sql
+   SELECT c.nombre, c.apellidos, e.nombre, e.apellidos
+   FROM clientes c
+   JOIN empleados e ON c.representante_venta = e.codigo_empleado;
+   ```
+
+2. Muestra el nombre de los clientes que hayan realizado pagos junto con el
+   nombre de sus representantes de ventas.
+
+   ```sql
+   SELECT c.nombre, c.apellidos, e.nombre, e.apellidos
+   FROM clientes c
+   JOIN empleados e ON c.representante_venta = e.codigo_empleado
+   WHERE c.codigo_cliente IN (SELECT p.codigo_cliente FROM pagos p);
+   ```
+
+3. Muestra el nombre de los clientes que no hayan realizado pagos junto con
+   el nombre de sus representantes de ventas.
+
+   ```sql
+   SELECT c.nombre, c.apellidos, e.nombre, e.apellidos
+   FROM clientes c
+   JOIN empleados e ON c.representante_venta = e.codigo_empleado
+   WHERE c.codigo_cliente NOT IN (SELECT p.codigo_cliente FROM pagos p);
+   ```
+
+4. Devuelve el nombre de los clientes que han hecho pagos y el nombre de sus
+   representantes junto con la ciudad de la oficina a la que pertenece el
+   representante.
+
+   ```sql
+   SELECT c.nombre, c.apellidos, e.nombre, e.apellidos, o.ciudad
+   FROM clientes c
+   JOIN empleados e ON c.representante_venta = e.codigo_empleado
+   JOIN oficinas o ON e.codigo_oficina = o.codigo_oficina
+   WHERE c.codigo_cliente IN (SELECT p.codigo_cliente FROM pagos p);
+   ```
+
+5. Devuelve el nombre de los clientes que no hayan hecho pagos y el nombre
+   de sus representantes junto con la ciudad de la oficina a la que pertenece el
+   representante.
+
+   ```sql
+   SELECT c.nombre, c.apellidos, e.nombre, e.apellidos, o.ciudad
+   FROM clientes c
+   JOIN empleados e ON c.representante_venta = e.codigo_empleado
+   JOIN oficinas o ON e.codigo_oficina = o.codigo_oficina
+   WHERE c.codigo_cliente NOT IN (SELECT p.codigo_cliente FROM pagos p);
+   ```
+
+6. Lista la dirección de las oficinas que tengan clientes en Fuenlabrada.
+
+   ```sql
+   SELECT o.ciudad, o.telefono
+   FROM oficinas o
+   JOIN empleados e ON o.codigo_oficina = e.codigo_oficina
+   JOIN clientes c ON e.codigo_empleado = c.representante_venta
+   WHERE c.ciudad = 'Fuenlabrada';
+   ```
+
+7. Devuelve el nombre de los clientes y el nombre de sus representantes junto
+   con la ciudad de la oficina a la que pertenece el representante.
+
+   ```sql
+   SELECT c.nombre, c.apellidos, e.nombre, e.apellidos, o.ciudad
+   FROM clientes c
+   JOIN empleados e ON c.representante_venta = e.codigo_empleado
+   JOIN oficinas o ON e.codigo_oficina = o.codigo_oficina;
+   ```
+
+8. Devuelve un listado con el nombre de los empleados junto con el nombre
+   de sus jefes.
+
+   ```sql
+   SELECT e.nombre, e.apellidos, j.nombre, j.apellidos
+   FROM empleados e
+   LEFT JOIN empleados j ON e.codigo_jefe = j.codigo_empleado;
+   ```
+
+9. Devuelve un listado que muestre el nombre de cada empleados, el nombre
+   de su jefe y el nombre del jefe de sus jefe.
+
+   ```sql
+   SELECT e.nombre, j1.nombre AS jefe, j2.nombre AS jefe_jefe
+   FROM empleados e
+   LEFT JOIN empleados j1 ON e.codigo_jefe = j1.codigo_empleado
+   LEFT JOIN empleados j2 ON j1.codigo_jefe = j2.codigo_empleado;
+   ```
+
+10. Devuelve el nombre de los clientes a los que no se les ha entregado a
+    tiempo un pedido.
+
+    ```sql
+    SELECT c.nombre, c.apellidos
+    FROM clientes c
+    JOIN pedidos p ON c.codigo_cliente = p.codigo_cliente
+    WHERE p.fecha_entrega > p.fecha_esperada;
+    ```
+
+11. Devuelve un listado de las diferentes gamas de producto que ha comprado
+    cada cliente.
+
+    ```sql
+    SELECT c.nombre, c.apellidos, p.gama
+    FROM clientes c
+    JOIN pedidos p ON c.codigo_cliente = p.codigo_cliente
+    JOIN detalle_pedido dp ON p.codigo_pedido = dp.codigo_pedido
+    JOIN productos pr ON dp.codigo_producto = pr.codigo_producto
+    GROUP BY c.nombre, c.apellidos, p.gama
+    ORDER BY c.nombre, c.apellidos;
+    ```
+
+
+
+### Consultas multitabla (Composición externa)
+
+1. Devuelve un listado que muestre solamente los clientes que no han
+   realizado ningún pago.
+
+   ```sql
+   SELECT c.nombre, c.apellidos
+   FROM clientes c
+   LEFT JOIN pagos p ON c.codigo_cliente = p.codigo_cliente
+   WHERE p.codigo_pago IS NULL;
+   ```
+
+2. Devuelve un listado que muestre solamente los clientes que no han
+   realizado ningún pedido.
+
+   ```sql
+   SELECT c.nombre, c.apellidos
+   FROM clientes c
+   LEFT JOIN pedidos p ON c.codigo_cliente = p.codigo_cliente
+   WHERE p.codigo_pedido IS NULL;
+   ```
+
+3. Devuelve un listado que muestre los clientes que no han realizado ningún
+   pago y los que no han realizado ningún pedido.
+
+   ```sql
+   SELECT c.nombre, c.apellidos
+   FROM clientes c
+   LEFT JOIN pagos p ON c.codigo_cliente = p.codigo_cliente
+   LEFT JOIN pedidos pd ON c.codigo_cliente = pd.codigo_cliente
+   WHERE p.codigo_pago IS NULL AND pd.codigo_pedido IS NULL;
+   ```
+
+4. Devuelve un listado que muestre solamente los empleados que no tienen
+   una oficina asociada.
+
+   ```sql
+   SELECT e.nombre, e.apellidos
+   FROM empleados e
+   LEFT JOIN oficinas o ON e.codigo_empleado = o.codigo_oficina
+   WHERE o.codigo_oficina IS NULL;
+   ```
+
+5. Devuelve un listado que muestre solamente los empleados que no tienen un
+   cliente asociado.
+
+   ```sql
+   SELECT e.nombre, e.apellidos
+   FROM empleados e
+   LEFT JOIN clientes c ON e.codigo_empleado = c.representante_venta
+   WHERE c.codigo_cliente IS NULL;
+   ```
+
+6. Devuelve un listado que muestre solamente los empleados que no tienen un
+   cliente asociado junto con los datos de la oficina donde trabajan.
+
+   ```sql
+   SELECT e.codigo_empleado, e.nombre, e.apellidos, o.ciudad
+   FROM empleados e
+   LEFT JOIN clientes c ON e.codigo_empleado = c.representante_venta
+   LEFT JOIN oficinas o ON e.codigo_oficina = o.codigo_oficina
+   WHERE c.codigo_cliente IS NULL;
+   ```
+
+7. Devuelve un listado que muestre los empleados que no tienen una oficina
+   asociada y los que no tienen un cliente asociado.
+
+   ```sql
+   SELECT e.codigo_empleado, e.nombre, e.apellidos
+   FROM empleados e
+   LEFT JOIN oficinas o ON e.codigo_oficina = o.codigo_oficina
+   LEFT JOIN clientes c ON e.codigo_empleado = c.representante_venta
+   WHERE o.codigo_oficina IS NULL AND c.codigo_cliente IS NULL;
+   ```
+
+8. Devuelve un listado de los productos que nunca han aparecido en un
+   pedido.
+
+   ```sql
+   SELECT * FROM productos
+   WHERE codigo_producto NOT IN (SELECT codigo_producto FROM detalle_pedido);
+   ```
+
+9. Devuelve un listado de los productos que nunca han aparecido en un
+   pedido. El resultado debe mostrar el nombre, la descripción y la imagen del
+   producto.
+
+   ```sql
+   SELECT nombre, descripcion, imagen 
+   FROM productos 
+   WHERE codigo_producto NOT IN (SELECT codigo_producto FROM detalle_pedido);
+   ```
+
+10. Devuelve las oficinas donde no trabajan ninguno de los empleados que
+    hayan sido los representantes de ventas de algún cliente que haya realizado
+    la compra de algún producto de la gama Frutales.
+
+    ```sql
+    SELECT * FROM oficinas o
+    WHERE NOT EXISTS (
+      SELECT * FROM empleados e
+      WHERE e.codigo_oficina = o.codigo_oficina
+      AND e.codigo_empleado IN (
+        SELECT DISTINCT representante_venta FROM clientes c
+        WHERE c.codigo_cliente IN (
+          SELECT pedidos.codigo_cliente FROM pedidos
+          JOIN detalle_pedido ON pedidos.codigo_pedido = detalle_pedido.codigo_pedido
+          JOIN productos ON detalle_pedido.codigo_producto = productos.codigo_producto
+          WHERE productos.gama = 'Frutales'
+        )
+      )
+    ;
+    ```
+
+11. Devuelve un listado con los clientes que han realizado algún pedido pero no
+    han realizado ningún pago.
+
+    ```sql
+    SELECT * FROM clientes c
+    WHERE EXISTS (
+      SELECT * FROM pedidos p WHERE p.codigo_cliente = c.codigo_cliente
+    ) AND NOT EXISTS (
+      SELECT * FROM pagos p WHERE p.codigo_cliente = c.codigo_cliente
+    );
+    ```
+
+12. Devuelve un listado con los datos de los empleados que no tienen clientes
+    asociados y el nombre de su jefe asociado.
+
+    ```sql
+    SELECT e.codigo_empleado, e.nombre, e.apellidos, j.nombre AS nombre_jefe, j.apellidos AS apellidos_jefe
+    FROM empleados e
+    LEFT JOIN empleados j ON e.codigo_jefe = j.codigo_empleado
+    WHERE e.codigo_empleado NOT IN (
+      SELECT DISTINCT representante_venta FROM clientes
+    );
+    ```
+
+    
+
