@@ -482,3 +482,373 @@ integrantes: Joseph Samuel Ospina Velasco
 
     
 
+### Consultas resumen
+
+1. ¿Cuántos empleados hay en la compañía?
+
+   ```sql
+   SELECT COUNT(*) AS num_empleados
+   FROM empleados;
+   ```
+
+2. ¿Cuántos clientes tiene cada país?
+
+   ```sql
+   SELECT 
+     c.ciudad, 
+     COUNT(*) AS num_clientes
+   FROM 
+     clientes c
+   GROUP BY 
+     c.ciudad
+   ORDER BY 
+     num_clientes DESC;
+   ```
+
+3. ¿Cuál fue el pago medio en 2009?
+
+   ```sql
+   SELECT AVG(p.cantidad) AS pago_medio
+   FROM pagos p
+   WHERE YEAR(p.fecha_pago) = 2009;
+   ```
+
+4. ¿Cuántos pedidos hay en cada estado? Ordena el resultado de forma
+   descendente por el número de pedidos.
+
+   ```sql
+   SELECT estado, COUNT(*) AS num_pedidos
+   FROM pedidos
+   GROUP BY estado
+   ORDER BY num_pedidos DESC;
+   ```
+
+5. Calcula el precio de venta del producto más caro y más barato en una
+   misma consulta.
+
+   ```sql
+   SELECT 
+     MAX(precio_venta) AS precio_mas_caro,
+     MIN(precio_venta) AS precio_mas_barato
+   FROM 
+     productos;
+   ```
+
+6. Calcula el número de clientes que tiene la empresa.
+
+   ```sql
+   SELECT COUNT(*) AS num_clientes
+   FROM clientes;
+   ```
+
+7. ¿Cuántos clientes existen con domicilio en la ciudad de Madrid?
+
+   ```sql
+   SELECT COUNT(*) AS num_clientes
+   FROM clientes
+   WHERE ciudad = 'Madrid';
+   ```
+
+8. ¿Calcula cuántos clientes tiene cada una de las ciudades que empiezan
+   por M?
+
+   ```sql
+   SELECT ciudad, COUNT(*) AS num_clientes
+   FROM clientes
+   WHERE ciudad LIKE 'M%'
+   GROUP BY ciudad;
+   ```
+
+9. Devuelve el nombre de los representantes de ventas y el número de clientes
+   al que atiende cada uno.
+
+   ```sql
+   SELECT e.nombre, COUNT(c.codigo_cliente) AS num_clientes
+   FROM empleados e
+   JOIN clientes c ON e.codigo_empleado = c.representante_venta
+   GROUP BY e.nombre;
+   ```
+
+10. Calcula el número de clientes que no tiene asignado representante de
+    ventas.
+
+    ```sql
+    SELECT COUNT(*)
+    FROM clientes
+    WHERE representante_venta IS NULL;
+    ```
+
+11. Calcula la fecha del primer y último pago realizado por cada uno de los
+    clientes. El listado deberá mostrar el nombre y los apellidos de cada cliente.
+
+    ```sql
+    SELECT 
+      c.nombre, 
+      c.apellidos, 
+      MIN(p.fecha_pago) AS primera_fecha_pago, 
+      MAX(p.fecha_pago) AS ultima_fecha_pago
+    FROM 
+      clientes c
+      JOIN pagos p ON c.codigo_cliente = p.codigo_cliente
+    GROUP BY 
+      c.nombre, 
+      c.apellidos;
+    ```
+
+12. Calcula el número de productos diferentes que hay en cada uno de los
+    pedidos.
+
+    ```sql
+    SELECT 
+      p.codigo_pedido, 
+      COUNT(DISTINCT dp.codigo_producto) AS num_productos
+    FROM 
+      pedidos p
+      JOIN detalle_pedido dp ON p.codigo_pedido = dp.codigo_pedido
+    GROUP BY 
+      p.codigo_pedido;
+    ```
+
+13. Calcula la suma de la cantidad total de todos los productos que aparecen en
+    cada uno de los pedidos.
+
+    ```sql
+    SELECT 
+      p.codigo_pedido, 
+      SUM(dp.cantidad) AS cantidad_total
+    FROM 
+      pedidos p
+      JOIN detalle_pedido dp ON p.codigo_pedido = dp.codigo_pedido
+    GROUP BY 
+      p.codigo_pedido;
+    ```
+
+14. Devuelve un listado de los 20 productos más vendidos y el número total de
+    unidades que se han vendido de cada uno. El listado deberá estar ordenado
+    por el número total de unidades vendidas.
+
+    ```sql
+    SELECT 
+      p.nombre, 
+      SUM(dp.cantidad) AS total_unidades_vendidas
+    FROM 
+      productos p
+      JOIN detalle_pedido dp ON p.codigo_producto = dp.codigo_producto
+    GROUP BY 
+      p.nombre
+    ORDER BY 
+      total_unidades_vendidas DESC
+    LIMIT 20;
+    ```
+
+15. La facturación que ha tenido la empresa en toda la historia, indicando la
+    base imponible, el IVA y el total facturado. La base imponible se calcula
+    sumando el coste del producto por el número de unidades vendidas de la
+    tabla detalle_pedido. El IVA es el 21 % de la base imponible, y el total la
+    suma de los dos campos anteriores.
+
+    ```sql
+    SELECT 
+      SUM(dp.cantidad * p.precio_venta) AS base_imponible,
+      (SUM(dp.cantidad * p.precio_venta) * 0.21) AS iva,
+      (SUM(dp.cantidad * p.precio_venta) * 1.21) AS total_facturado
+    FROM 
+      detalle_pedido dp
+      JOIN pedidos p ON dp.codigo_pedido = p.codigo_pedido
+      JOIN clientes c ON p.codigo_cliente = c.codigo_cliente
+      JOIN empleados e ON c.representante_venta = e.codigo_empleado;
+    ```
+
+16. La misma información que en la pregunta anterior, pero agrupada por
+    código de producto.
+
+    ```sql
+    SELECT 
+      p.codigo_producto,
+      SUM(dp.cantidad * p.precio_venta) AS base_imponible,
+      (SUM(dp.cantidad * p.precio_venta) * 0.21) AS iva,
+      (SUM(dp.cantidad * p.precio_venta) * 1.21) AS total_facturado
+    FROM 
+      detalle_pedido dp
+      JOIN pedidos p ON dp.codigo_pedido = p.codigo_pedido
+      JOIN clientes c ON p.codigo_cliente = c.codigo_cliente
+      JOIN empleados e ON c.representante_venta = e.codigo_empleado
+      JOIN productos pr ON dp.codigo_producto = pr.codigo_producto
+    GROUP BY 
+      p.codigo_producto;
+    ```
+
+17. La misma información que en la pregunta anterior, pero agrupada por
+    código de producto filtrada por los códigos que empiecen por OR.
+
+    ```sql
+    SELECT 
+      p.codigo_producto,
+      SUM(dp.cantidad * p.precio_venta) AS base_imponible,
+      (SUM(dp.cantidad * p.precio_venta) * 0.21) AS iva,
+      (SUM(dp.cantidad * p.precio_venta) * 1.21) AS total_facturado
+    FROM 
+      detalle_pedido dp
+      JOIN pedidos p ON dp.codigo_pedido = p.codigo_pedido
+      JOIN clientes c ON p.codigo_cliente = c.codigo_cliente
+      JOIN empleados e ON c.representante_venta = e.codigo_empleado
+      JOIN productos pr ON dp.codigo_producto = pr.codigo_producto
+    WHERE 
+      p.codigo_producto LIKE 'OR%'
+    GROUP BY 
+      p.codigo_producto;
+    ```
+
+18. Lista las ventas totales de los productos que hayan facturado más de 3000
+    euros. Se mostrará el nombre, unidades vendidas, total facturado y total
+    facturado con impuestos (21% IVA).
+
+    ```sql
+    SELECT 
+      p.nombre,
+      SUM(dp.cantidad) AS unidades_vendidas,
+      SUM(dp.cantidad * p.precio_venta) AS total_facturado,
+      SUM(dp.cantidad * p.precio_venta * 1.21) AS total_facturado_iva
+    FROM 
+      detalle_pedido dp
+      JOIN pedidos p ON dp.codigo_pedido = p.codigo_pedido
+      JOIN clientes c ON p.codigo_cliente = c.codigo_cliente
+      JOIN empleados e ON c.representante_venta = e.codigo_empleado
+      JOIN productos pr ON dp.codigo_producto = pr.codigo_producto
+    GROUP BY 
+      p.nombre
+    HAVING 
+      SUM(dp.cantidad * p.precio_venta) > 3000;
+    ```
+
+19. Muestre la suma total de todos los pagos que se realizaron para cada uno
+    de los años que aparecen en la tabla pagos.
+
+    ```sql
+    SELECT 
+      YEAR(fecha_pago) AS anio,
+      SUM(cantidad) AS total_pagado
+    FROM 
+      pagos
+    GROUP BY 
+      anio
+    ORDER BY 
+      anio;
+    ```
+
+    
+
+### Consultas variadas
+
+1. Devuelve el listado de clientes indicando el nombre del cliente y cuántos
+   pedidos ha realizado. Tenga en cuenta que pueden existir clientes que no
+   han realizado ningún pedido.
+
+   ```sql
+   SELECT 
+     c.nombre,
+     COUNT(p.codigo_pedido) AS pedidos_realizados
+   FROM 
+     clientes c
+     LEFT JOIN pedidos p ON c.codigo_cliente = p.codigo_cliente
+   GROUP BY 
+     c.nombre;
+   ```
+
+2. Devuelve un listado con los nombres de los clientes y el total pagado por
+   cada uno de ellos. Tenga en cuenta que pueden existir clientes que no han
+   realizado ningún pago.
+
+   ```sql
+   SELECT 
+     c.nombre,
+     c.apellidos,
+     COALESCE(SUM(p.cantidad), 0) AS total_pagado
+   FROM 
+     clientes c
+     LEFT JOIN pagos p ON c.codigo_cliente = p.codigo_cliente
+   GROUP BY 
+     c.nombre, c.apellidos
+   ORDER BY 
+     total_pagado DESC;
+   ```
+
+3. Devuelve el nombre de los clientes que hayan hecho pedidos en 2008
+   ordenados alfabéticamente de menor a mayor.
+
+   ```sql
+   SELECT DISTINCT c.nombre, c.apellidos
+   FROM clientes c
+   JOIN pedidos p ON c.codigo_cliente = p.codigo_cliente
+   WHERE YEAR(p.fecha_esperada) = 2008
+   ORDER BY c.nombre ASC, c.apellidos ASC;
+   ```
+
+4. Devuelve el nombre del cliente, el nombre y primer apellido de su representante de ventas y el número de teléfono de la oficina del representante de ventas, de aquellos clientes que no hayan realizado ningún pago.
+
+   ```sql
+   SELECT 
+     c.nombre AS cliente_nombre,
+     e.nombre AS representante_nombre,
+     SUBSTRING(e.apellidos, 1, 1) AS representante_apellido_inicial,
+     o.telefono AS oficina_telefono
+   FROM 
+     clientes c
+     LEFT JOIN empleados re ON c.representante_venta = re.codigo_empleado
+     LEFT JOIN empleados jefe ON re.codigo_jefe = jefe.codigo_empleado
+     LEFT JOIN oficinas o ON jefe.oficina = o.codigo_oficina
+     LEFT JOIN pagos p ON c.codigo_cliente = p.codigo_cliente
+   WHERE 
+     p.codigo_pago IS NULL
+   ORDER BY 
+     cliente_nombre ASC;
+   ```
+
+5. Devuelve el listado de clientes donde aparezca el nombre del cliente, el
+   nombre y primer apellido de su representante de ventas y la ciudad donde
+   está su oficina.
+
+   ```sql
+   SELECT 
+     c.nombre AS cliente_nombre,
+     CONCAT(e.nombre, ' ', SUBSTRING(e.apellidos, 1, 1)) AS representante_nombre_apellido_inicial,
+     o.ciudad AS oficina_ciudad
+   FROM 
+     clientes c
+     JOIN empleados re ON c.representante_venta = re.codigo_empleado
+     JOIN empleados jefe ON re.codigo_jefe = jefe.codigo_empleado
+     JOIN oficinas o ON jefe.oficina = o.codigo_oficina;
+   ```
+
+6. Devuelve el nombre, apellidos, puesto y teléfono de la oficina de aquellos
+   empleados que no sean representante de ventas de ningún cliente.
+
+   ```sql
+   SELECT 
+     e.nombre,
+     e.apellidos,
+     e.puesto,
+     o.telefono
+   FROM 
+     empleados e
+     LEFT JOIN clientes c ON e.codigo_empleado = c.representante_venta
+     LEFT JOIN oficinas o ON e.oficina = o.codigo_oficina
+   WHERE 
+     c.codigo_cliente IS NULL;
+   ```
+
+7. Devuelve un listado indicando todas las ciudades donde hay oficinas y el
+   número de empleados que tiene.
+
+   ```sql
+   SELECT 
+     o.ciudad,
+     COUNT(e.codigo_empleado) AS num_empleados
+   FROM 
+     oficinas o
+     LEFT JOIN empleados e ON o.codigo_oficina = e.oficina
+   GROUP BY 
+     o.ciudad;
+   ```
+
+   
